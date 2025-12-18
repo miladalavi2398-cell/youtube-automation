@@ -1,0 +1,50 @@
+name: Video Maker Pro
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: 🛠️ Setup environment
+      run: |
+        echo "📦 Updating package list..."
+        sudo apt-get update -q
+        echo "✅ Update complete"
+        
+    - name: 🔧 Install FFmpeg
+      run: |
+        echo "🔧 Installing FFmpeg..."
+        sudo apt-get install -y ffmpeg > /dev/null 2>&1
+        echo "✅ FFmpeg installed"
+        ffmpeg -version | head -1
+        
+    - name: 🎬 Create video (SAFE METHOD)
+      run: |
+        echo "🎬 Creating video..."
+        # روش ایمن - ساخت ویدیوی ساده
+        ffmpeg -f lavfi -i color=c=0x2E86AB:s=640x360:d=3 \
+               -vf "drawtext=text='GitHub Actions Test':fontcolor=white:fontsize=24:x=20:y=20" \
+               -c:v libx264 -pix_fmt yuv420p \
+               -frames:v 75 \
+               test_video.mp4 2>&1 | tail -5
+        
+        echo "📊 Checking file..."
+        ls -lh test_video.mp4
+        file test_video.mp4
+        
+    - name: 📤 Upload result
+      uses: actions/upload-artifact@v3
+      with:
+        name: video-result
+        path: test_video.mp4
+        retention-days: 5
+        
+    - name: 🎉 Success message
+      run: |
+        echo "========================================"
+        echo "✅ VIDEO CREATION SUCCESSFUL!"
+        echo "🕒 Time: $(date)"
+        echo "📦 Artifact: 'video-result'"
+        echo "📥 Download from Actions → Artifacts"
+        echo "========================================"
