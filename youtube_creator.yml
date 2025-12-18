@@ -1,0 +1,49 @@
+name: YouTube Video Creator
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * *'  # هر روز ۸:۳۰ صبح به وقت ایران
+
+jobs:
+  create-video:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # ۱. آماده‌سازی
+    - name: 📦 Install tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+        echo "✅ Tools installed"
+        
+    # ۲. ساخت ویدیوی نمونه
+    - name: 🎬 Create video
+      run: |
+        # ساخت ویدیوی ۱۰ ثانیه‌ای
+        ffmpeg -f lavfi -i color=c=navy:s=1280x720:d=10 \
+               -f lavfi -i sine=frequency=440:duration=10 \
+               -c:v libx264 -c:a aac \
+               -vf "drawtext=text='Daily Video %{localtime\\:%Y-%m-%d}':fontcolor=white:fontsize=40:x=(w-text_w)/2:y=(h-text_h)/2" \
+               -pix_fmt yuv420p \
+               video_output.mp4
+               
+        echo "🎥 Video created successfully"
+        ls -lh video_output.mp4
+        
+    # ۳. ذخیره ویدیو
+    - name: 📤 Upload video
+      uses: actions/upload-artifact@v3
+      with:
+        name: daily-video
+        path: video_output.mp4
+        retention-days: 7
+        
+    # ۴. گزارش
+    - name: 📊 Report
+      run: |
+        echo "========================================"
+        echo "✅ YOUTUBE VIDEO CREATED!"
+        echo "📅 Date: $(date)"
+        echo "📦 Artifact: 'daily-video'"
+        echo "📥 Download from Actions → Artifacts"
+        echo "========================================"
