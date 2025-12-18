@@ -1,20 +1,37 @@
-name: My Video Maker
-
-on:
-  workflow_dispatch:
+name: Video Maker Fixed
+on: [workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - run: echo "🎬 Starting video creation..."
     
-    - name: Install tools
-      run: sudo apt update && sudo apt install -y ffmpeg
-      
-    - name: Make video
+    - name: 1. Install FFmpeg
       run: |
-        ffmpeg -f lavfi -i color=c=green:s=320x240:d=2 -c:v libx264 output.mp4
-        ls -lh output.mp4
+        echo "🛠️ Installing FFmpeg..."
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+        echo "✅ FFmpeg version:"
+        ffmpeg -version | head -1
         
-    - run: echo "✅ Done! Check Artifacts below."
+    - name: 2. Create simple video
+      run: |
+        echo "🎬 Creating video..."
+        # روش قطعی برای ساخت ویدیو
+        ffmpeg -f lavfi -i testsrc=duration=5:size=640x360:rate=25 \
+               -c:v libx264 -pix_fmt yuv420p \
+               video_test.mp4
+        
+        echo "📊 Video info:"
+        ls -lh video_test.mp4
+        file video_test.mp4 || true
+        
+    - name: 3. Upload video
+      uses: actions/upload-artifact@v3
+      with:
+        name: my-video-file
+        path: video_test.mp4
+        if-no-files-found: error
+        
+    - name: 4. Final message
+      run: echo "✅ Workflow completed successfully!"
