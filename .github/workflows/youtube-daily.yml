@@ -1,47 +1,23 @@
-name: Create Daily YouTube Videos
+name: Make Video
 
-on:
+on: 
   workflow_dispatch:
-  schedule:
-    - cron: '0 5 * * *'  # هر روز ۵ صبح به وقت جهانی (۸:۳۰ به وقت ایران)
 
 jobs:
-  create-videos:
+  build:
     runs-on: ubuntu-latest
     
     steps:
-    - name: 📦 Checkout code
-      uses: actions/checkout@v3
+    - name: Setup
+      run: sudo apt update && sudo apt install -y ffmpeg
       
-    - name: 🛠️ Setup tools
+    - name: Create video
       run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg curl
-        echo "Tools installed successfully"
+        ffmpeg -f lavfi -i color=c=blue:s=640x360:d=5 -f lavfi -i sine=frequency=1000:duration=5 -c:v libx264 -c:a aac output.mp4
+        ls -lh output.mp4
         
-    - name: 🎬 Create sample video
-      run: |
-        # ساخت یک ویدیوی نمونه آبی با صدای بیپ
-        ffmpeg -f lavfi -i color=c=blue:s=1280x720:d=10 \
-               -f lavfi -i sine=frequency=1000:duration=10 \
-               -c:v libx264 -c:a aac \
-               -vf "drawtext=text='Daily Video %{localtime}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y=(h-text_h)/2" \
-               video_sample.mp4
-               
-        echo "Video created: video_sample.mp4"
-        ls -lh *.mp4
-        
-    - name: 📤 Upload as artifact
+    - name: Upload
       uses: actions/upload-artifact@v3
       with:
-        name: youtube-video
-        path: video_sample.mp4
-        retention-days: 3
-        
-    - name: 🎉 Completion
-      run: |
-        echo "========================================"
-        echo "✅ DAILY VIDEO CREATED SUCCESSFULLY!"
-        echo "📅 Date: $(date)"
-        echo "📦 Download from Actions → Artifacts"
-        echo "========================================"
+        name: my-video
+        path: output.mp4
