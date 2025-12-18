@@ -1,23 +1,7 @@
-name: Video Maker
-
-on:
-  workflow_dispatch:
-
+name: Test Action
+on: [workflow_dispatch]
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
-    - name: Install FFmpeg
-      run: sudo apt update && sudo apt install -y ffmpeg
-      
-    - name: Create video
-      run: |
-        ffmpeg -f lavfi -i color=c=green:s=640x360:d=3 -c:v libx264 -pix_fmt yuv420p test.mp4
-        echo "Video size:"
-        ls -lh test.mp4
-        
-    - name: Save video
-      uses: actions/upload-artifact@v3
-      with:
-        name: video-result
-        path: test.mp4
+    - run: echo "Workflow is working"
