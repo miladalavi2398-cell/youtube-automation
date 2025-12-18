@@ -1,0 +1,74 @@
+name: Create YouTube Video
+on:
+  workflow_dispatch:  # اجازه اجرای دستی می‌دهد
+  schedule:
+    - cron: '0 8 * * *'  # هر روز ساعت 8 صبح به وقت جهانی
+
+jobs:
+  build-video:
+    runs-on: ubuntu-latest  # روی سرور اوبونتو اجرا می‌شود
+    
+    steps:
+    # مرحله ۱: آماده‌سازی
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    # مرحله ۲: نصب FFmpeg
+    - name: Install FFmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+        ffmpeg -version  # بررسی نصب
+        
+    # مرحله ۳: دانلود یک تصویر تست
+    - name: Download sample image
+      run: |
+        curl -L -o background.jpg "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1280&h=720"
+        echo "✅ Image downloaded"
+        
+    # مرحله ۴: تولید صوت تست
+    - name: Create test audio
+      run: |
+        # ساخت یک فایل صوتی تست
+        echo "Creating test audio..."
+        text="Welcome to our daily video. Today we discuss technology and innovation."
+        curl -G "https://translate.google.com/translate_tts" \
+          --data-urlencode "ie=UTF-8" \
+          --data-urlencode "client=tw-ob" \
+          --data-urlencode "tl=en" \
+          --data-urlencode "q=$text" \
+          -o audio.mp3
+          
+    # مرحله ۵: ساخت ویدیو
+    - name: Create video with FFmpeg
+      run: |
+        echo "🎬 Creating video..."
+        ffmpeg -loop 1 -i background.jpg -i audio.mp3 \
+               -c:v libx264 -tune stillimage \
+               -c:a aac -b:a 192k \
+               -pix_fmt yuv420p \
+               -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2" \
+               -shortest \
+               -y output_video.mp4
+               
+        # بررسی ساخته شدن ویدیو
+        ls -lh output_video.mp4
+        echo "✅ Video created successfully"
+        
+    # مرحله ۶: ذخیره ویدیو
+    - name: Upload video artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: youtube-video
+        path: output_video.mp4
+        retention-days: 7  # ۷ روز ذخیره می‌ماند
+        
+    # مرحله ۷: نمایش اطلاعات
+    - name: Show completion message
+      run: |
+        echo "========================================"
+        echo "🎉 VIDEO CREATION COMPLETE!"
+        echo "📅 Date: $(date)"
+        echo "📦 Video saved as artifact: 'youtube-video'"
+        echo "📥 Download from Actions tab → Artifacts"
+        echo "========================================"
